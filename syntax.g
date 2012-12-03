@@ -1,4 +1,5 @@
 globalvars = {}       # We will store the calculator's variables here
+globaldecls = []      # sorted by declaration order
 def lookup(map, name):
     #print "lookup", map, name
     for x, v in map:
@@ -7,6 +8,12 @@ def lookup(map, name):
         #print 'Undefined (defaulting to 0):', name
         pass
     return globalvars.get(name, 0)
+
+def define(decl):
+    globalvars[decl.name] = decl
+    globaldecls.append(decl)
+
+from AST import *
 
 %%
 parser HSDL:
@@ -77,7 +84,7 @@ parser HSDL:
     token STR:   " "
     token VAR: " "
     token TYPEVAR: " "
-    token CLASSVAR: " "
+    token CLASSVAR: " " 
     token BUILTINVAR: " "
 
     token TOKACTIONSTATEMENT: "action"
@@ -159,66 +166,88 @@ parser HSDL:
 ############################################################################
 
     rule type_decl:
-        ( typevar_item_or_var
-        | CLASSVAR typevar_item_or_var
-        )
- [ LBRACKET NUM (COLON NUM)* RBRACKET ]
+        ( typevar_item
+        | CLASSVAR typevar_item
+        ) {{ return typevar_item}}
+        [ LBRACKET NUM (COLON NUM)* RBRACKET ]
 
     rule formal_item:
-        ( function_parameter
-        | type_decl [ item_name ]
+        ( function_parameter {{return function_parameter}}
+        | type_decl {{item_name=None}} [ item_name ] {{return Param(item_name, type_decl)}}
         )
 
-    rule param_item:
-        (   LPAREN param_item RPAREN
-        |   ( [ TOKNUMERIC | TOKPARAMETER ] TOKTYPE VAR
-            | formal_item
-            | NUM
-            | STR
+    rule param_item: 
+        (   LPAREN param_item {{pi=param_item}} RPAREN
+        |   ( ( TOKNUMERIC | TOKPARAMETER ) TOKTYPE VAR {{pi=VAR}}
+            | TOKTYPE VAR {{pi=VAR}}
+            | formal_item {{pi=formal_item}}
+            | NUM {{pi=NUM}}
+            | STR {{pi=STR}}
             )
             [ VAR ]
             [ typevar_param_list ]
-        )
+        ) {{return pi}}
 
     rule typevar_param_list:
-        LPAREN [ param_item (COMMA param_item )* ] RPAREN
+        LPAREN {{tlist=[]}} [ param_item {{tlist.append(param_item)}} (COMMA param_item {{tlist.append(param_item)}} )* ] RPAREN {{return tlist}}
 
     rule typevar_item:
-        TYPEVAR typevar_param_list
-
-    rule typevar_item_or_var:
-        VAR [ typevar_param_list ]
-        | typevar_item
+        TYPEVAR {{typevar_param_list=[]}} [ typevar_param_list ] {{ return Type(TYPEVAR, typevar_param_list) }}
 
     rule Type_list:
-        ( type_decl
-        | LPAREN type_decl (COMMA type_decl)* RPAREN
+        ( type_decl {{ return type_decl }}
+        | LPAREN type_decl (COMMA type_decl)* RPAREN {{ return type_decl }}
         )
 
-    rule enum_element:
-        term<<[]>> [EQUAL expr<<[]>>]
+    rule enum_element: {{q=[]; v=None}}
+        TYPEVAR
+        [LBRACKET NUM {{q.append(NUM)}} [ COLON NUM {{q.append(NUM)}} ] RBRACKET ]
+        [EQUAL NUM {{v=NUM}}] {{return EnumElement(TYPEVAR,q,v)}}
+
+    rule enum_declaration: {{elts=[]}}
+        TOKENUM LBRACE enum_element {{elts.append(enum_element)}}
+                       [ ( ( COMMA enum_element {{elts.append(enum_element)}} )+ ) ] 
+                RBRACE {{ return Enum(None, elts)}}
 
     rule deriving_type_class:
         TOKEQ | TOKBITS | TOKBOUNDED
 
-    rule single_type_definition:
-        (   Type_list [ type_decl | TOKENABLE ]
-        |   ( TOKENUM LBRACE enum_element [ ( ( COMMA enum_element )+ | SEMICOLON ) ]  RBRACE VAR
-            | ( TOKSTRUCT | TOKUNION TOKTAGGED )
-                LBRACE
-                    ( single_type_definition )*
-                RBRACE
-                typevar_item_or_var
-            )
-            [ TOKDERIVING  LPAREN deriving_type_class ( COMMA deriving_type_class )* RPAREN ]
-        )
-        SEMICOLON
+    rule struct_member:
+        typevar_item VAR SEMICOLON {{ return StructMember(typevar_item, VAR) }}
 
-    rule formal_list:
-        LPAREN [ formal_item ( COMMA formal_item)* ] RPAREN
+    rule struct_declaration:
+        TOKSTRUCT {{elts=[]}}
+                LBRACE
+                    ( struct_member {{elts.append(struct_member)}} )*
+                RBRACE {{return Struct(None, elts) }}
+
+    rule union_member:
+        ( typevar_item VAR
+        | struct_declaration VAR
+        | union_declaration VAR) SEMICOLON
+
+    rule union_declaration:
+	    TOKUNION TOKTAGGED {{elts=[]}}
+                LBRACE
+                    ( union_member )*
+                RBRACE {{return Union(None, elts)}}
+
+    rule single_type_definition:
+        (   Type_list [ type_decl {{ Type_list.name=type_decl }} | TOKENABLE {{ Type_list.name='enable' }} ] {{ return Type_list }}
+        |   ( enum_declaration {{t=enum_declaration}}
+            | struct_declaration {{t=struct_declaration}}
+            | union_declaration {{t=union_declaration}}
+            ) typevar_item {{t.name=typevar_item}}
+            [ TOKDERIVING  LPAREN deriving_type_class ( COMMA deriving_type_class )* RPAREN ] 
+        | NUM ( VAR {{ t = VAR }} | TYPEVAR {{ t = TYPEVAR }} )
+            {{ t = Numeric(t, NUM) }}
+        ) SEMICOLON {{return t}}
+
+    rule formal_list: {{fl=[]}}
+        LPAREN [ formal_item {{fl.append(formal_item)}} ( COMMA formal_item {{fl.append(formal_item)}})* ] RPAREN {{return fl}}
 
     rule function_argument:
-        ( typevar_item_or_var
+        ( typevar_item
         | LPAREN function_argument (COMMA function_argument)* RPAREN
         )
         [VAR [ formal_list ] ]
@@ -243,7 +272,7 @@ parser HSDL:
         | LBRACE dot_field_item (COMMA dot_field_item)* RBRACE
 
     rule tagged_dot_list:
-        TOKTAGGED VAR
+        TOKTAGGED TYPEVAR
         [
             (dot_field_list
             | LPAREN
@@ -312,10 +341,13 @@ parser HSDL:
         LPAREN [ call_pitem ( COMMA call_pitem )* ] RPAREN
 
     rule item_name:
-        ( VAR | TOKREADY | TOKENABLE)
+        ( VAR {{return VAR}} | TOKREADY {{return 'ready'}} | TOKENABLE {{ return 'enable'}})
 
     rule term_single:
-        CLASSVAR* ( item_name | typevar_item )
+        ( CLASSVAR+ ( item_name | typevar_item)
+        | item_name
+        | typevar_item
+        )
         ( call_params
         | LBRACE [ VAR COLON assign_rvalue ( COMMA VAR COLON assign_rvalue )* ] RBRACE
         )*
@@ -323,7 +355,7 @@ parser HSDL:
     # A term is a number, variable, or an expression surrounded by parentheses
     rule term<<V>>:
         (    NUM
-        |    (TOKTAGGED term_single)+ [term_single]
+        |    (TOKTAGGED TYPEVAR)+ [term_single]
         |    BUILTINVAR [ param_list ]
         |    term_single
         |    STR {{ return STR }}
@@ -396,12 +428,12 @@ parser HSDL:
         term<<[]>> assign_opvalue
 
     rule declared_item:
-        term<<[]>> [ assign_opvalue ]
+        term<<[]>> [ assign_opvalue ] {{ return term }}
 
     rule rule_statement:
-        TOKRULE VAR [paren_expression] [TOKIF paren_expression] SEMICOLON
+        TOKRULE VAR {{ruleid=VAR}}[paren_expression] [TOKIF paren_expression] SEMICOLON
         statement_list
-        TOKENDRULE [ COLON  VAR ]
+        TOKENDRULE [ COLON  VAR ] {{ return 'rule: ' + ruleid }}
 
     rule match_arg:
         DOT ( term<<[]>> | STAR )
@@ -417,19 +449,19 @@ parser HSDL:
             statement_list
             TOKENDACTION [ COLON VAR]
         | TOKACTIONVALUESTATEMENT statement_list TOKENDACTIONVALUE
-        | TOKCASE paren_expression
-            ( TOKMATCHES
-              (   matches_clause
-                  COLON (QUESTION SEMICOLON | single_statement)
-              )*
-            | (
-                  (expr<<[]>> (COMMA expr<<[]>>)*
-                  | TOKDEFAULT
-                  )
-                  COLON (QUESTION SEMICOLON | single_statement)
-              )*
-            )
-            TOKENDCASE
+        ## | TOKCASE paren_expression
+        ##     ( TOKMATCHES
+        ##       (   matches_clause
+        ##           COLON (QUESTION SEMICOLON | single_statement)
+        ##       )*
+        ##     | (
+        ##           (expr<<[]>> (COMMA expr<<[]>>)*
+        ##           | TOKDEFAULT
+        ##           )
+        ##           COLON (QUESTION SEMICOLON | single_statement)
+        ##       )*
+        ##     )
+        ##     TOKENDCASE
 
     rule statement_or_declaration:
           TOKFUNCTION [ Type_list ]
@@ -441,13 +473,8 @@ parser HSDL:
             )
         | ( TOKLET ( VAR | LBRACE VAR (COMMA VAR)* RBRACE) assign_opvalue
           | typevar_item declared_item ( COMMA declared_item )*
-          | expr<<[]>>
-              [   ( declared_item ( COMMA declared_item )*
-                  | assign_opvalue
-                  )
-              ]
           ) SEMICOLON
-        | rule_statement
+        | rule_statement {{ return rule_statement }}
 
     rule single_statement_no_declaration:
           TOKFOR LPAREN
@@ -457,7 +484,7 @@ parser HSDL:
             RPAREN
             single_statement
         | TOKIF paren_expression single_statement [ TOKELSE single_statement ]
-        | TOKMATCH ( TOKTAGGED VAR dot_field_list | match_brace ) assign_opvalue SEMICOLON
+#        | TOKMATCH ( TOKTAGGED TYPEVAR dot_field_list | match_brace ) assign_opvalue SEMICOLON
         | TOKPAR statement_list TOKENDPAR
         | TOKRETURN assign_rvalue SEMICOLON
         | TOKWHILE paren_expression ( statement_yielding_value | VAR SEMICOLON)
@@ -474,8 +501,8 @@ parser HSDL:
 ############################# Declarations #################################
 ############################################################################
 
-    rule method_declaration:
-        TOKMETHOD type_decl [ VAR ] [ formal_list [VAR] ]
+    rule method_declaration: {{methodid=None; formal_list=[]}}
+        TOKMETHOD type_decl [ VAR {{methodid=VAR}}] [ formal_list [VAR] ]
         ( ( TOKIF | TOKCLOCKED_BY | TOKRESET_BY | TOKENABLE | TOKREADY) paren_expression )*
         [ equal_value ]
         [ provisos_clause ] SEMICOLON
@@ -483,25 +510,20 @@ parser HSDL:
             (   ( single_statement )+ TOKENDMETHOD [ COLON VAR]
             |   TOKENDMETHOD [ COLON VAR]
             )
-        ]
+        ] {{ return Method(methodid, type_decl, formal_list) }}
 
-    rule interface_declaration:
-        TOKINTERFACE CLASSVAR*
-        typevar_item_or_var [ VAR ]
+    rule interface_declaration: {{ interfaceid = "" }}
+        TOKINTERFACE ( CLASSVAR {{ print CLASSVAR; interfaceid = interfaceid + CLASSVAR }} )* 
+        TYPEVAR {{ interfaceid = TYPEVAR; interfacevalue=[]; var=None }} [ VAR {{print VAR; var=VAR}} ]
             ( equal_value
             | [ SEMICOLON ]
-                ( method_declaration
-                | TOKINTERFACE
-                    ( typevar_item VAR SEMICOLON
-                    | VAR ( equal_value SEMICOLON
-                          | VAR ( equal_value SEMICOLON
-                                | SEMICOLON [ method_declaration+ TOKENDINTERFACE [ COLON VAR ] ]
-                                )
-                          )
-                    )
+                ( method_declaration {{ interfacevalue.append(method_declaration) }}
+                | TOKINTERFACE {{subinterfaceid=""}} ( CLASSVAR {{ print CLASSVAR; subinterfaceid = subinterfaceid + CLASSVAR }} )* 
+                  TYPEVAR {{ subinterfaceid = TYPEVAR }} VAR {{subvar=VAR}} SEMICOLON
+                  {{interfacevalue.append(Interface(subinterfaceid, [], subvar))}}
                 )*
                 TOKENDINTERFACE [ COLON VAR ]
-            )
+            ) {{ i=Interface(interfaceid, interfacevalue, var); return i }}
 
     rule import_arg:
         ( VAR | var_list )
@@ -510,28 +532,30 @@ parser HSDL:
         VAR TOKDETERMINES VAR
 
     rule single_declaration:
-          interface_declaration [SEMICOLON]
-        | statement_or_declaration
-        | method_declaration
-        | TOKMODULE [ LBRACKET assign_rvalue RBRACKET ] typevar_item_or_var
+          interface_declaration [SEMICOLON] {{ i=interface_declaration; define(i); return i }}
+        | statement_or_declaration {{ return statement_or_declaration }}
+        | method_declaration {{ return method_declaration }}
+        | TOKMODULE [ LBRACKET assign_rvalue RBRACKET ] VAR {{ print VAR; moduleid = VAR; modulevalue = [] }}
             [ typevar_param_list ]
             [ provisos_clause ] SEMICOLON
             [
                 ( TOKENDMODULE [ COLON VAR]
-                | ( single_statement_no_declaration | single_declaration)+ TOKENDMODULE [ COLON VAR]
+                | ( single_statement_no_declaration {{ modulevalue.append(single_statement_no_declaration) }}
+                   | single_declaration {{ modulevalue.append(single_declaration) }})+
+                  TOKENDMODULE [ COLON VAR]
                 )
-            ]
-        | TOKTYPEDEF ( single_type_definition | NUM VAR SEMICOLON )
+            ] {{ m=Module(moduleid, modulevalue); define(m); return m}}
+        | TOKTYPEDEF ( single_type_definition ) {{t=single_type_definition; define(t)}}
         | TOKIMPORT
             ( CLASSVAR STAR SEMICOLON
             | SEMICOLON
             | TOKBDPI [ VAR  EQUAL ]
-                TOKFUNCTION typevar_item_or_var
+                TOKFUNCTION typevar_item
                 function_name
                 formal_list
                 [ provisos_clause ] SEMICOLON
             | TOKBVI [ VAR [ EQUAL ] ]
-                TOKMODULE typevar_item_or_var
+                TOKMODULE typevar_item
                 [ formal_list ]
                 [ provisos_clause ] SEMICOLON
                 ( method_declaration
@@ -561,8 +585,8 @@ parser HSDL:
 
     rule goal:
         ( single_declaration
-        | TOKPACKAGE VAR SEMICOLON ( single_declaration )* TOKENDPACKAGE [ COLON  VAR]
-        )* ENDTOKEN
+        | TOKPACKAGE ( VAR | TYPEVAR ) SEMICOLON ( single_declaration )* TOKENDPACKAGE [ COLON  VAR]
+        )* ENDTOKEN {{ return globalvars }}
 
 %%
 import string

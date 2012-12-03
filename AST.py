@@ -81,3 +81,11 @@ class Type:
     def __repr__(self):
         sparams = map(str, self.params)
         return '{type: %s %s}' % (self.name, sparams)
+
+class Numeric:
+    def __init__(self, name, value):
+        self.type = 'Numeric'
+        self.name = name
+        self.value = value
+    def __repr__(self):
+        return '{numeric: %s %s}' % (self.name, self.value)

@@ -13,11 +13,9 @@ def define(decl):
     globalvars[decl.name] = decl
     globaldecls.append(decl)
 
-from AST import *
-
 %%
 parser HSDL:
-    #option:      "context-insensitive-scanner"
+    option:      "context-insensitive-scanner"
 
     token ENDTOKEN: " "
     token LPAREN: "("
@@ -41,38 +39,65 @@ parser HSDL:
     token CLASSVAR: " " 
     token BUILTINVAR: " "
 
-    token TOKACTIONSTATEMENT: "action"
-based
-box
-color
-cyan
-darkolivegreen3
-digraph
-filled
-firebrick
-label
-on
-orchid4
-preserved
-rank
-same
-shape
-style
+    token TOKBASED: "based"
+    token TOKDIGRAPH: "digraph"
+    token TOKLABEL: "label"
+    token TOKSHAPE: "shape"
+    token TOKSTYLE: "style"
+    token TOKCOLOR: "color"
+    token TOKRANK: "rank"
+    token TOKSAME: "same"
+    token TOKBOX: "box"
+    token TOKFILLED: "filled"
+#cyan
+#darkolivegreen3
+#firebrick
+#orchid4
 
 ############################################################################
 ############################# Datatypes ####################################
 ############################################################################
 
-    rule type_decl:
-        ( typevar_item
-        | CLASSVAR typevar_item
-        ) {{ return typevar_item}}
-        [ LBRACKET NUM (COLON NUM)* RBRACKET ]
+    rule state_name:
+        STR
+
+    rule transition_name:
+        STR
+
+    rule state_definition:
+        state_name
+        LBRACKET
+            ( TOKLABEL EQUAL STR
+            | TOKSHAPE EQUAL TOKBOX
+            | TOKSTYLE EQUAL TOKFILLED
+            | TOKCOLOR EQUAL VAR
+            )*
+        RBRACKET
+        SEMICOLON
+
+    rule ranking:
+        LBRACE
+        TOKRANK EQUAL TOKSAME SEMICOLON
+        (
+            state_name
+        )+
+        RBRACE
+
+    rule transition_definition:
+        state_name
+        RARROW
+        state_name
+        LBRACKET
+            TOKLABEL EQUAL transition_name
+        RBRACKET
 
     rule goal:
-        ( single_declaration
-        | TOKPACKAGE ( VAR | TYPEVAR ) SEMICOLON ( single_declaration )* TOKENDPACKAGE [ COLON  VAR]
-        )* ENDTOKEN {{ return globalvars }}
+        TOKDIGRAPH STR LBRACE
+        ( state_definition )+
+        ( ranking )+
+        ( transition_definition )+
+        RBRACE 
+        ENDTOKEN {{ return globalvars }}
 
 %%
 import string

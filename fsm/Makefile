@@ -1,8 +1,10 @@
 
-all:
-	dot ION_architecture.dot -Tbmp -ofoo
+all: display
 
-display:
+foo.bmp: test.dot graph.py
+	dot test.dot -Tbmp -ofoo.bmp
+
+display: foo.bmp
 	open -a Preview foo.bmp
 
 parse: graph.py

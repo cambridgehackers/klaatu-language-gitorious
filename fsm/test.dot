@@ -1,46 +1,42 @@
 digraph wifistates {
-node [shape=box style=filled]
+    node [shape=box style=filled]
+    Initial [ color=firebrick ]; 
+    Connected [ color=green ]; 
 
-    Initial [ color = firebrick ]; 
-    Connected [ color = green ]; 
-    { rank=same; Initial Z }
-    { rank=same; Driver_Loaded Supplicant_Starting Connecting }
-    { rank=same; Driver_Loading Driver_Failed Driver_Unloading Driver_Started Scan_Mode }
-    { rank=same; Driver_Unloaded Disconnected }
+    { rank=same; Initial Driver_Loaded Supplicant_Starting Driver_Started Driver_Starting }
+    { rank=same; Driver_Loading Driver_Failed }
+    { rank=same; Driver_Unloaded Driver_Unloading }
+    { rank=same; Connect_Mode Scan_Mode Connecting Disconnected }
+    { rank=same; Connected Disconnecting }
 
-    Supplicant_Starting -> Driver_Started [ label = SUP_CONNECTION_EVENT ]
-    Driver_Started -> Driver_Stopping [ label = CMD_DELAYED_STOP_DRIVER ]
-    Driver_Stopping -> Driver_Stopped
-    Driver_Stopped -> Driver_Starting [ label = CMD_START_DRIVER ]
-
-    Driver_Stopped -> Driver_Started [ label = SUP_STATE_CHANGE ]
-    Initial -> Driver_Unloaded
-    Driver_Unloaded -> Driver_Loading [ label = CMD_LOAD_DRIVER ]
-    Driver_Loaded -> Supplicant_Starting [ label = CMD_START_SUPPLICANT ]
-    Driver_Loading -> Driver_Loaded
-    subgraph cluster1 {
-    Driver_Loading -> Driver_Failed
-    Driver_Failed -> Driver_Unloading [dir=back]
-    }
-    subgraph cluster2 {
-    Driver_Started -> Scan_Mode
-    Scan_Mode -> Disconnected [ dir=both label = CMD_SET_SCAN_MODE ]
-    }
-    Driver_Unloading -> Driver_Unloaded
-    Driver_Loaded -> Driver_Unloading [ label = CMD_UNLOAD_DRIVER ]
-    Driver_Started -> Disconnected
-    Driver_Starting -> Driver_Started [ label = SUP_STATE_CHANGE ]
-    Initial -> Driver_Loaded
-    Z -> Supplicant_Stopping [ label = CMD_STOP_SUPPLICANT ]
-    Z -> Driver_Loaded [ label = SUP_DISCONNECTION_EVENT ]
-    Connected -> Connecting
+    Connect_Mode -> Disconnected [ label="SUP_STATE_CHANGE\nNETWORK_DISCONNECTING" ]
+    Connect_Mode -> Disconnecting [ label="CMD_CONNECT_NETWORK\nSUP_STATE_CHANGE" ]
+    Connected -> Connecting 
+    Connected -> Disconnecting [ label="CMD_POST_DHCP_ACTION\nCMD_DISCONNECT" ]
+    Connecting -> Connect_Mode [ dir=back label=NETWORK_CONNECTION_EVENT ]
+    Connecting -> Connected [ label="STATIC_IP_SUCCESS\nCMD_POST_DHCP_ACTION" ]
     Connecting -> Disconnecting
-    Connecting -> Connected [ label = "STATIC_IP_SUCCESS\nCMD_POST_DHCP_ACTION" ]
-    Connect_Mode -> Disconnecting [ label = "CMD_CONNECT_NETWORK\nSUP_STATE_CHANGE" ]
-    Connected -> Disconnecting [ label = "CMD_POST_DHCP_ACTION\nCMD_DISCONNECT" ]
-    Connect_Mode -> Disconnected [ label = "SUP_STATE_CHANGE\nNETWORK_DISCONNECTING" ]
-    Connect_Mode -> Connecting [ label = NETWORK_CONNECTION_EVENT ]
-    Supplicant_Starting -> Driver_Loaded [ label = SUP_DISCONNECTION_EVENT ]
-    Supplicant_Stopping -> Driver_Loaded [ label = "SUP_DISCONNECTION_EVENT\nCMD_STOP_SUPPLICANT_FAILED" ]
-    Disconnecting -> Disconnected [ label = SUP_STATE_CHANGE ]
+    Disconnected -> Scan_Mode [ dir=both label=CMD_SET_SCAN_MODE ]
+    Disconnecting -> Disconnected [ label=SUP_STATE_CHANGE ]
+    Driver_Failed -> Driver_Unloading [dir=back]
+    Driver_Loaded -> Driver_Unloading [ label=CMD_UNLOAD_DRIVER ]
+    Driver_Loaded -> Supplicant_Starting [ label=CMD_START_SUPPLICANT ]
+    Driver_Loading -> Driver_Failed
+    Driver_Loading -> Driver_Loaded
+    Driver_Started -> Disconnected
+    Driver_Started -> Driver_Stopping [ label=CMD_DELAYED_STOP_DRIVER ]
+    Driver_Started -> Scan_Mode 
+    Driver_Starting -> Driver_Started [ label=SUP_STATE_CHANGE ]
+    Driver_Stopped -> Driver_Started [ label=SUP_STATE_CHANGE ]
+    Driver_Stopped -> Driver_Starting [ label=CMD_START_DRIVER ]
+    Driver_Stopping -> Driver_Stopped
+    Driver_Unloaded -> Driver_Loading [ label=CMD_LOAD_DRIVER ]
+    Driver_Unloaded -> Driver_Unloading [dir=back]
+    Initial -> Driver_Loaded
+    Initial -> Driver_Unloaded
+    Supplicant_Starting -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
+    Supplicant_Starting -> Driver_Started [ label=SUP_CONNECTION_EVENT ]
+    Supplicant_Stopping -> Driver_Loaded [ label="SUP_DISCONNECTION_EVENT\nCMD_STOP_SUPPLICANT_FAILED" ]
+    default -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]
+    default1 -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
 }

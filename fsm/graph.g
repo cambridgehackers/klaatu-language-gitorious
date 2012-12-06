@@ -1,17 +1,43 @@
-globalvars = {}       # We will store the calculator's variables here
-globaldecls = []      # sorted by declaration order
-def lookup(map, name):
-    #print "lookup", map, name
-    for x, v in map:
-        if x == name: return v
-    if not globalvars.has_key(name):
-        #print 'Undefined (defaulting to 0):', name
-        pass
-    return globalvars.get(name, 0)
 
-def define(decl):
-    globalvars[decl.name] = decl
-    globaldecls.append(decl)
+transition = {}
+event_names = []
+
+def add_transition(first, second, attrs):
+    dir = ''
+    events = []
+    if attrs is not None:
+        dir = attrs[0]
+        events = attrs[1]
+    if dir == 'back':
+        temp = first
+        first = second
+        second = temp
+    #print "ADD", first, second, dir, events
+    if len(first) > 7 and first[0:7] == 'default':
+        first = 'default'
+    for tname in events:
+        if tname not in event_names:
+            event_names.append(tname)
+    if events == []:
+        events = [' ']
+    if transition.get(first) is None:
+        transition[first] = {}
+    if transition.get(second) is None:
+        transition[second] = {}
+    for tname in events:
+        if transition[first].get(tname) is None:
+            transition[first][tname] = []
+        transition[first][tname].append(second)
+    if dir == 'both':
+        for tname in events:
+            if transition[second].get(tname) is None:
+                transition[second][tname] = []
+            transition[second][tname].append(first)
+
+def print_transitions():
+    print "OVER", sorted(event_names)
+    for item in sorted(transition):
+        print 'item', item, transition[item]
 
 %%
 parser HSDL:
@@ -56,12 +82,6 @@ parser HSDL:
         | TYPEVAR {{ return TYPEVAR.strip() }}
         )
 
-    rule state_name:
-        name {{ return name }}
-
-    rule transition_name:
-        name {{ return name }}
-
     rule attribute_list:
         LBRACKET
             ( TOKLABEL EQUAL name
@@ -69,17 +89,9 @@ parser HSDL:
             )*
         RBRACKET
 
-    rule ranking:
-        LBRACE
-        TOKRANK EQUAL TOKSAME SEMICOLON
-        (
-            state_name
-        )+
-        RBRACE
-
     rule transition_definition:
         LBRACKET {{ direction = ''; transition = '' }}
-            ( TOKLABEL EQUAL transition_name {{ transition = transition_name }}
+            ( TOKLABEL EQUAL name {{ transition = name.split('\\n') }}
             | TOKDIR EQUAL VAR {{ direction = VAR }}
             | VAR EQUAL (VAR | STR)
             )*
@@ -89,16 +101,17 @@ parser HSDL:
     rule goal:
         TOKDIGRAPH name LBRACE
         ( TOKNODE attribute_list
-        | state_name {{ firststate = state_name }}
+        | name {{ firststate = name }}
              ( attribute_list SEMICOLON
-             | RARROW state_name {{ states = (firststate, state_name, None) }}
-                  [ transition_definition {{ states = (firststate, state_name, transition_definition) }} ]
-                  {{ print "STATES", states }}
+             | RARROW name {{ attr = None }}
+                  [ transition_definition {{ attr = transition_definition }} ]
+                  {{ add_transition(firststate, name, attr) }}
              )
-        | ranking
+        | LBRACE TOKRANK EQUAL TOKSAME SEMICOLON ( name )+ RBRACE
         )*
         RBRACE 
-        ENDTOKEN {{ return globalvars }}
+        {{ print_transitions() }}
+        ENDTOKEN
 
 %%
 import string

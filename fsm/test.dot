@@ -1,13 +1,12 @@
 digraph wifistates {
     node [shape=box style=filled]
-    Initial [ color=firebrick ]; 
-    Connected [ color=green ]; 
 
     { rank=same; Initial Driver_Loaded Supplicant_Starting Driver_Started Driver_Starting }
-    { rank=same; Driver_Loading Driver_Failed }
     { rank=same; Driver_Unloaded Driver_Unloading }
-    { rank=same; Connect_Mode Scan_Mode Connecting Disconnected }
+    { rank=same; Driver_Loading Driver_Failed }
+    { rank=same; Connect_Mode Connecting Disconnected }
     { rank=same; Connected Disconnecting }
+    { rank=same; Driver_Stopped Scan_Mode }
 
     Connect_Mode -> Disconnected [ label="SUP_STATE_CHANGE\nNETWORK_DISCONNECTING" ]
     Connect_Mode -> Disconnecting [ label="CMD_CONNECT_NETWORK\nSUP_STATE_CHANGE" ]
@@ -34,9 +33,13 @@ digraph wifistates {
     Driver_Unloaded -> Driver_Unloading [dir=back]
     Initial -> Driver_Loaded
     Initial -> Driver_Unloaded
-    Supplicant_Starting -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
+    //Supplicant_Starting -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
     Supplicant_Starting -> Driver_Started [ label=SUP_CONNECTION_EVENT ]
     Supplicant_Stopping -> Driver_Loaded [ label="SUP_DISCONNECTION_EVENT\nCMD_STOP_SUPPLICANT_FAILED" ]
     default -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]
     default1 -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
+
+    Initial [ color=firebrick ]; 
+    Connected [ color=green ]; 
+    Driver_Stopped [ color=green ]; 
 }

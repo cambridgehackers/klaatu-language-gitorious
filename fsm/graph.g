@@ -39,41 +39,35 @@ parser HSDL:
     token CLASSVAR: " " 
     token BUILTINVAR: " "
 
-    token TOKBASED: "based"
     token TOKDIGRAPH: "digraph"
     token TOKLABEL: "label"
-    token TOKSHAPE: "shape"
-    token TOKSTYLE: "style"
-    token TOKCOLOR: "color"
     token TOKRANK: "rank"
+    token TOKDIR: "dir"
+    token TOKNODE: "node"
     token TOKSAME: "same"
-    token TOKBOX: "box"
-    token TOKFILLED: "filled"
-#cyan
-#darkolivegreen3
-#firebrick
-#orchid4
 
 ############################################################################
 ############################# Datatypes ####################################
 ############################################################################
 
+    rule name:
+        ( STR {{ return STR[1:-1].strip() }}
+        | VAR {{ return VAR.strip() }}
+        | TYPEVAR {{ return TYPEVAR.strip() }}
+        )
+
     rule state_name:
-        STR
+        name {{ return name }}
 
     rule transition_name:
-        STR
+        name {{ return name }}
 
-    rule state_definition:
-        state_name
+    rule attribute_list:
         LBRACKET
-            ( TOKLABEL EQUAL STR
-            | TOKSHAPE EQUAL TOKBOX
-            | TOKSTYLE EQUAL TOKFILLED
-            | TOKCOLOR EQUAL VAR
+            ( TOKLABEL EQUAL name
+            | VAR EQUAL VAR
             )*
         RBRACKET
-        SEMICOLON
 
     rule ranking:
         LBRACE
@@ -84,18 +78,25 @@ parser HSDL:
         RBRACE
 
     rule transition_definition:
-        state_name
-        RARROW
-        state_name
-        LBRACKET
-            TOKLABEL EQUAL transition_name
+        LBRACKET {{ direction = ''; transition = '' }}
+            ( TOKLABEL EQUAL transition_name {{ transition = transition_name }}
+            | TOKDIR EQUAL VAR {{ direction = VAR }}
+            | VAR EQUAL (VAR | STR)
+            )*
         RBRACKET
+        {{ return (direction, transition) }}
 
     rule goal:
-        TOKDIGRAPH STR LBRACE
-        ( state_definition )+
-        ( ranking )+
-        ( transition_definition )+
+        TOKDIGRAPH name LBRACE
+        ( TOKNODE attribute_list
+        | state_name {{ firststate = state_name }}
+             ( attribute_list SEMICOLON
+             | RARROW state_name {{ states = (firststate, state_name, None) }}
+                  [ transition_definition {{ states = (firststate, state_name, transition_definition) }} ]
+                  {{ print "STATES", states }}
+             )
+        | ranking
+        )*
         RBRACE 
         ENDTOKEN {{ return globalvars }}
 

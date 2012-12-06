@@ -33,7 +33,6 @@ digraph wifistates {
     Driver_Unloaded -> Driver_Unloading [dir=back]
     Initial -> Driver_Loaded
     Initial -> Driver_Unloaded
-    //Supplicant_Starting -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
     Supplicant_Starting -> Driver_Started [ label=SUP_CONNECTION_EVENT ]
     Supplicant_Stopping -> Driver_Loaded [ label="SUP_DISCONNECTION_EVENT\nCMD_STOP_SUPPLICANT_FAILED" ]
     default -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]

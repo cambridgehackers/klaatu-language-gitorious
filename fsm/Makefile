@@ -1,15 +1,15 @@
 
 all: display
 
-foo.bmp: test.dot graph.py
-	dot test.dot -Tbmp -ofoo.bmp
+wifistates.bmp: wifistates.dot graph.py
+	dot wifistates.dot -Tbmp -owifistates.bmp
 
-display: foo.bmp
-	open -a Preview foo.bmp
+display: wifistates.bmp
+	open -a Preview wifistates.bmp
 
-parse: graph.py
-	#./graph.py test.dot xx
-	./graph.py test.dot
+parse: graph.py wifistates.bmp
+	#./graph.py wifistates.dot xx
+	./graph.py wifistates.dot
 	g++ testprog.cc
 
 graph.py: graph.g

@@ -1,7 +1,7 @@
 digraph wifistates {
     node [shape=box style=filled]
 
-    { rank=same; Initial Driver_Loaded Supplicant_Starting Driver_Started Driver_Starting }
+    { rank=same; Initial Driver_Loaded Supplicant_Starting Driver_Started }
     { rank=same; Driver_Unloaded Driver_Unloading }
     { rank=same; Driver_Loading Driver_Failed }
     { rank=same; Connect_Mode Connecting Disconnected }
@@ -11,9 +11,9 @@ digraph wifistates {
     Connect_Mode -> Disconnected [ label="SUP_STATE_CHANGE_EVENT\nNETWORK_DISCONNECTION_EVENT" ]
     Connect_Mode -> Disconnecting [ label="CMD_CONNECT_NETWORK\nSUP_STATE_CHANGE_EVENT" ]
     Connected -> Connecting 
-    Connected -> Disconnecting [ label="CMD_POST_DHCP_ACTION\nCMD_DISCONNECT" ]
+    Connected -> Disconnecting [ label="DHCP_FAILURE\nCMD_DISCONNECT" ]
     Connecting -> Connect_Mode [ dir=back label=NETWORK_CONNECTION_EVENT ]
-    Connecting -> Connected [ label="STATIC_IP_SUCCESS\nCMD_POST_DHCP_ACTION" ]
+    Connecting -> Connected [ label="DHCP_SUCCESS" ]
     Connecting -> Disconnecting
     Disconnected -> Scan_Mode [ dir=both label=CMD_START_SCAN ]
     Disconnecting -> Disconnected [ label=SUP_STATE_CHANGE_EVENT ]
@@ -23,11 +23,9 @@ digraph wifistates {
     Driver_Loading -> Driver_Failed
     Driver_Loading -> Driver_Loaded
     Driver_Started -> Disconnected
-    Driver_Started -> Driver_Stopping [ label=CMD_DELAYED_STOP_DRIVER ]
+    Driver_Started -> Driver_Stopping [ label=CMD_STOP_DRIVER ]
     Driver_Started -> Scan_Mode 
-    Driver_Starting -> Driver_Started [ label=SUP_STATE_CHANGE_EVENT ]
     Driver_Stopped -> Driver_Started [ label=SUP_STATE_CHANGE_EVENT ]
-    Driver_Stopped -> Driver_Starting [ label=CMD_START_DRIVER ]
     Driver_Stopping -> Driver_Stopped
     Driver_Unloaded -> Driver_Loading [ label=CMD_LOAD_DRIVER ]
     Driver_Unloaded -> Driver_Unloading [dir=back]

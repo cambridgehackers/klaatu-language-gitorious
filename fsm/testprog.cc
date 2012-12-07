@@ -1,6 +1,7 @@
 
 #include <stdio.h>
-#define STATE_INITIALIZE_CODE
+#define FSM_DEFINE_ENUMS
+#define FSM_INITIALIZE_CODE
 #include "xx.output"
 
 int main()

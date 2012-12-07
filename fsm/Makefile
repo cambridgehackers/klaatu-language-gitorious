@@ -10,6 +10,7 @@ display: foo.bmp
 parse: graph.py
 	#./graph.py test.dot xx
 	./graph.py test.dot
+	gcc testprog.c
 
 graph.py: graph.g
 	python ../yapps/yapps2.py graph.g 

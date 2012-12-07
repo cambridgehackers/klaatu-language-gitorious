@@ -69,6 +69,7 @@ def print_transitions():
             index = 0
             fh.write('\n    ')
     fh.write('STATE_MAX};\n\n')
+    fh.write('typedef struct {\n   int event;\n   int state;\n} STATE_TRANSITION;\n')
     fh.write('#ifdef STATE_INITIALIZE_CODE\nSTATE_TRANSITION *state_table[STATE_MAX];\nvoid initstates(void)\n{\n')
     for item in sorted(transition):
         print_states(fh, item)

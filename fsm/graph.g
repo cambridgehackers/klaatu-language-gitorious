@@ -34,10 +34,50 @@ def add_transition(first, second, attrs):
                 transition[second][tname] = []
             transition[second][tname].append(first)
 
+def print_states(fh, aname):
+    tralist = transition[aname]
+    #print 'item', aname, tralist
+    if tralist == {}:
+        return
+    fh.write('    static STATE_TRANSITION TRA_' + aname + '[] = {')
+    for item in sorted(tralist):
+        t = item
+        if item == ' ':
+            t = '0'
+        for sitem in tralist[item]:
+            fh.write('{' + t + ',STATE_' + sitem + '}, ')
+    fh.write('}\n')
+
 def print_transitions():
-    print "OVER", sorted(event_names)
+    #print "OVER", sorted(event_names)
+    fh = open('xx.output', 'w')
+    fh.write('enum { EVENT_NONE=1,\n    ')
+    index = 0
+    for item in sorted(event_names):
+        fh.write(item + ', ')
+        index += 1
+        if index > 2:
+            index = 0
+            fh.write('\n    ')
+    fh.write('EVENT_MAX}\n\n')
+    fh.write('enum { STATE_NONE=1,\n    ')
+    index = 0
     for item in sorted(transition):
-        print 'item', item, transition[item]
+        fh.write('STATE_' + item + ', ')
+        index += 1
+        if index > 2:
+            index = 0
+            fh.write('\n    ')
+    fh.write('STATE_MAX}\n\n')
+    fh.write('#ifdef STATE_INITIALIZE_CODE\nSTATE_TRANSITION *state_table[STATE_MAX];\nvoid initstates(void)\n{\n')
+    for item in sorted(transition):
+        print_states(fh, item)
+    fh.write('\n')
+    for item in sorted(transition):
+        if transition[item] != {}:
+            fh.write('    state_table[STATE_' + item + '] = TRA_' + item + ';\n')
+    fh.write('}\n#endif\n')
+    fh.close()
 
 %%
 parser HSDL:

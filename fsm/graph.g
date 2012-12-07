@@ -46,7 +46,7 @@ def print_states(fh, aname):
             t = '0'
         for sitem in tralist[item]:
             fh.write('{' + t + ',STATE_' + sitem + '}, ')
-    fh.write('}\n')
+    fh.write('};\n')
 
 def print_transitions():
     #print "OVER", sorted(event_names)
@@ -59,7 +59,7 @@ def print_transitions():
         if index > 2:
             index = 0
             fh.write('\n    ')
-    fh.write('EVENT_MAX}\n\n')
+    fh.write('EVENT_MAX};\n\n')
     fh.write('enum { STATE_NONE=1,\n    ')
     index = 0
     for item in sorted(transition):
@@ -68,7 +68,7 @@ def print_transitions():
         if index > 2:
             index = 0
             fh.write('\n    ')
-    fh.write('STATE_MAX}\n\n')
+    fh.write('STATE_MAX};\n\n')
     fh.write('#ifdef STATE_INITIALIZE_CODE\nSTATE_TRANSITION *state_table[STATE_MAX];\nvoid initstates(void)\n{\n')
     for item in sorted(transition):
         print_states(fh, item)

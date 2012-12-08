@@ -53,7 +53,7 @@ def print_states(fh, aname):
             t = nameprefix + t
         for sitem in tralist[item]:
             fh.write('{' + t + ',' + get_sname(sitem) + '}, ')
-    fh.write('};\n')
+    fh.write('{0,0} };\n')
 
 def print_transitions():
     global nameprefix

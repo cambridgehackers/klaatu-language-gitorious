@@ -6,7 +6,7 @@ digraph wifistates {
     { rank=same; Driver_Loading Driver_Failed }
     { rank=same; Connect_Mode Connecting Disconnected }
     { rank=same; Connected Disconnecting }
-    { rank=same; Driver_Stopped Scan_Mode }
+    { rank=same; Driver_Stopped Scan_Mode Driver_Stopping }
 
     Connect_Mode -> Disconnected [ label="SUP_STATE_CHANGE_EVENT\nNETWORK_DISCONNECTION_EVENT" ]
     Connect_Mode -> Disconnecting [ label="CMD_CONNECT_NETWORK\nSUP_STATE_CHANGE_EVENT" ]
@@ -17,22 +17,22 @@ digraph wifistates {
     Connecting -> Disconnecting
     Disconnected -> Scan_Mode [ dir=both label=CMD_START_SCAN ]
     Disconnecting -> Disconnected [ label=SUP_STATE_CHANGE_EVENT ]
-    Driver_Failed -> Driver_Unloading [dir=back]
+    Driver_Failed -> Driver_Unloading [dir=back label=CMD_UNLOAD_DRIVER_FAILURE ]
     Driver_Loaded -> Driver_Unloading [ label=CMD_UNLOAD_DRIVER ]
     Driver_Loaded -> Supplicant_Starting [ label=CMD_START_SUPPLICANT ]
-    Driver_Loading -> Driver_Failed
-    Driver_Loading -> Driver_Loaded
+    Driver_Loading -> Driver_Failed [label=CMD_LOAD_DRIVER_FAILURE]
+    Driver_Loading -> Driver_Loaded [label=CMD_LOAD_DRIVER_SUCCESS]
     Driver_Started -> Disconnected
     Driver_Started -> Driver_Stopping [ label=CMD_STOP_DRIVER ]
     Driver_Started -> Scan_Mode 
     Driver_Stopped -> Driver_Started [ label=SUP_STATE_CHANGE_EVENT ]
     Driver_Stopping -> Driver_Stopped
     Driver_Unloaded -> Driver_Loading [ label=CMD_LOAD_DRIVER ]
-    Driver_Unloaded -> Driver_Unloading [dir=back]
+    Driver_Unloaded -> Driver_Unloading [dir=back label=CMD_UNLOAD_DRIVER_SUCCESS ]
     Initial -> Driver_Loaded
     Initial -> Driver_Unloaded
     Supplicant_Starting -> Driver_Started [ label=SUP_CONNECTION_EVENT ]
-    Supplicant_Stopping -> Driver_Loaded [ label="SUP_DISCONNECTION_EVENT\nCMD_STOP_SUPPLICANT_FAILURE" ]
+    Supplicant_Stopping -> Driver_Loaded [ label=CMD_STOP_SUPPLICANT_FAILURE ]
     default -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]
     default1 -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
 

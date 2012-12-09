@@ -5,7 +5,8 @@ wifistates.bmp: wifistates.dot graph.py
 	dot wifistates.dot -Tbmp -owifistates.bmp
 
 display: wifistates.bmp
-	open -a Preview wifistates.bmp
+	#open -a Preview wifistates.bmp
+	open wifistates.bmp
 
 parse: graph.py wifistates.bmp
 	#./graph.py wifistates.dot xx

@@ -3,8 +3,19 @@ transition = {}
 event_names = []
 nameprefix = 'WifiStateMachine::'
 
+def add_elements(first, second, events):
+    if transition.get(first) is None:
+        transition[first] = {}
+    if transition.get(second) is None:
+        transition[second] = {}
+    for tname in events:
+        if tname not in event_names and tname != ' ':
+            event_names.append(tname)
+        if transition[first].get(tname) is None:
+            transition[first][tname] = []
+        transition[first][tname].append(second)
+
 def add_transition(first, second, attrs):
-    global nameprefix
     dir = ''
     events = []
     if attrs is not None:
@@ -17,24 +28,11 @@ def add_transition(first, second, attrs):
     #print "ADD", first, second, dir, events
     if len(first) > 7 and first[0:7] == 'default':
         first = 'default'
-    for tname in events:
-        if tname not in event_names:
-            event_names.append(tname)
     if events == []:
         events = [' ']
-    if transition.get(first) is None:
-        transition[first] = {}
-    if transition.get(second) is None:
-        transition[second] = {}
-    for tname in events:
-        if transition[first].get(tname) is None:
-            transition[first][tname] = []
-        transition[first][tname].append(second)
+    add_elements(first, second, events)
     if dir == 'both':
-        for tname in events:
-            if transition[second].get(tname) is None:
-                transition[second][tname] = []
-            transition[second][tname].append(first)
+        add_elements(second, first, events)
 
 def get_sname(aname):
     return aname.upper() + '_STATE'
@@ -56,9 +54,9 @@ def print_states(fh, aname):
     fh.write('{0,0} };\n')
 
 def print_transitions():
-    global nameprefix
     #print "OVER", sorted(event_names)
     fh = open('xx.output', 'w')
+    fh.write('namespace android {\n')
     fh.write('#ifdef FSM_DEFINE_ENUMS\nclass WifiStateMachine {\npublic:\nenum { EVENT_NONE=1,\n    ')
     index = 0
     for item in sorted(event_names):
@@ -67,7 +65,7 @@ def print_transitions():
         if index > 2:
             index = 0
             fh.write('\n    ')
-    fh.write('EVENT_MAX};\n};\n')
+    fh.write('MAX_WIFI_EVENT};\n};\n#endif\n')
     fh.write('enum { STATE_NONE=1,\n    ')
     index = 0
     for item in sorted(transition):
@@ -76,16 +74,24 @@ def print_transitions():
         if index > 2:
             index = 0
             fh.write('\n    ')
-    fh.write('STATE_MAX};\n#endif\n')
+    fh.write('STATE_MAX};\n')
     fh.write('typedef struct {\n   int event;\n   int state;\n} STATE_TRANSITION;\n')
-    fh.write('#ifdef FSM_INITIALIZE_CODE\nSTATE_TRANSITION *state_table[' + 'STATE_MAX];\nvoid initstates(void)\n{\n')
+    fh.write('extern const char *sMessageToString[' + nameprefix + 'MAX_WIFI_EVENT];\n')
+    fh.write('#ifdef FSM_INITIALIZE_CODE\n')
+    fh.write('const char *sMessageToString[' + nameprefix + 'MAX_WIFI_EVENT];\n')
+    fh.write('static struct {\n    const char *name;\n    STATE_TRANSITION *tran;\n} state_table[' + 'STATE_MAX];\n')
+    fh.write('void initstates(void)\n{\n')
     for item in sorted(transition):
         print_states(fh, item)
     fh.write('\n')
     for item in sorted(transition):
+        fh.write('    state_table[' + get_sname(item) + '].name = "' + item + '";\n')
         if transition[item] != {}:
-            fh.write('    state_table[' + get_sname(item) + '] = TRA_' + item + ';\n')
+            fh.write('    state_table[' + get_sname(item) + '].tran = TRA_' + item + ';\n')
+    for item in sorted(event_names):
+        fh.write('    sMessageToString[' + nameprefix + item + '] = "' + item + '";\n')
     fh.write('}\n#endif\n')
+    fh.write('} /* namespace android */\n')
     fh.close()
 
 %%
@@ -116,6 +122,7 @@ parser HSDL:
 
     token TOKDIGRAPH: "digraph"
     token TOKLABEL: "label"
+    token TOKDEFER: "defer"
     token TOKRANK: "rank"
     token TOKDIR: "dir"
     token TOKNODE: "node"
@@ -131,13 +138,6 @@ parser HSDL:
         | TYPEVAR {{ return TYPEVAR.strip() }}
         )
 
-    rule attribute_list:
-        LBRACKET
-            ( TOKLABEL EQUAL name
-            | VAR EQUAL VAR
-            )*
-        RBRACKET
-
     rule transition_definition:
         LBRACKET {{ direction = ''; transition = '' }}
             ( TOKLABEL EQUAL name {{ transition = name.split('\\n') }}
@@ -149,9 +149,12 @@ parser HSDL:
 
     rule goal:
         TOKDIGRAPH name LBRACE
-        ( TOKNODE attribute_list
+        ( TOKNODE LBRACKET ( VAR EQUAL VAR)* RBRACKET
         | name {{ firststate = name }}
-             ( attribute_list SEMICOLON
+             ( LBRACKET
+                 ( TOKDEFER EQUAL name {{ add_elements(firststate, "DEFER", name.split('\\n')) }}
+                 | ( TOKLABEL | VAR ) EQUAL name
+                 )* RBRACKET SEMICOLON
              | RARROW name {{ attr = None }}
                   [ transition_definition {{ attr = transition_definition }} ]
                   {{ add_transition(firststate, name, attr) }}
@@ -163,7 +166,6 @@ parser HSDL:
         ENDTOKEN
 
 %%
-import string
 import newrt
 
 if __name__=='__main__':

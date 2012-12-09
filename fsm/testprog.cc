@@ -7,6 +7,6 @@
 int main()
 {
     printf ("begin\n");
-    initstates();
+    android::initstates();
     return 0;
 }

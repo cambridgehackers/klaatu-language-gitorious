@@ -37,15 +37,25 @@ digraph wifistates {
     default -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]
     default1 -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
 
-    Initial [ color=firebrick ]; 
-    Connected [ color=green ]; 
-    Driver_Stopped [ color=green ]; 
-    Driver_Loading [ defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
-    Driver_Unloading [ defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
-    Supplicant_Starting [ defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
-    Driver_Stopping [ defer="CMD_START_DRIVER\nCMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_START_SCAN\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
-    Driver_Stopped [ defer="CMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
-    Driver_Starting [ defer="CMD_START_DRIVER\nCMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_START_SCAN\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
-    Connecting [ defer="CMD_START_SCAN" ];
-    Unused [ defer="CMD_ADD_OR_UPDATE_NETWORK\nCMD_DISABLE_NETWORK\nCMD_ENABLE_BACKGROUND_SCAN\nCMD_ENABLE_NETWORK\nCMD_ENABLE_RSSI_POLL\nCMD_REMOVE_NETWORK\nCMD_RSSI_POLL\nCMD_SELECT_NETWORK\nCMD_STOP_SUPPLICANT_SUCCESS\nSUP_SCAN_RESULTS_EVENT" ];
+    Connect_Mode        [ actions="0, 1, 0, Driver_Started" ];
+    Connected           [ actions="1, 1, 1, Connect_Mode" color=green ];
+    Connecting          [ actions="0, 1, 0, Connect_Mode" defer="CMD_START_SCAN" ];
+    Disconnected        [ actions="1, 1, 1, Connect_Mode" ];
+    Disconnecting       [ actions="0, 1, 0, Connect_Mode" ];
+    Driver_Failed       [ actions="0, 1, 0, Driver_Unloaded" ];
+    Driver_Loaded       [ actions="0, 1, 0, default" ];
+    Driver_Loading      [ actions="1, 2, 0, default" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
+    Driver_Started      [ actions="1, 1, 0, Supplicant_Started" ];
+    Driver_Starting     [ defer="CMD_START_DRIVER\nCMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_START_SCAN\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
+    Driver_Stopped      [ actions="0, 2, 0, Supplicant_Started" color=green defer="CMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
+    Driver_Stopping     [ actions="0, 1, 0, Supplicant_Started" defer="CMD_START_DRIVER\nCMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_START_SCAN\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
+    Driver_Unloaded     [ actions="0, 2, 0, default" ];
+    Driver_Unloading    [ actions="1, 2, 0, default" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
+    Initial             [ color=firebrick ]; 
+    Scan_Mode           [ actions="0, 0, 0, Driver_Started" ];
+    Supplicant_Started  [ actions="0, 1, 1, default" ];
+    Supplicant_Starting [ actions="0, 1, 0, default" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
+    Supplicant_Stopping [ actions="1, 0, 0, default" ];
+    Unused              [ defer="CMD_ADD_OR_UPDATE_NETWORK\nCMD_DISABLE_NETWORK\nCMD_ENABLE_BACKGROUND_SCAN\nCMD_ENABLE_NETWORK\nCMD_ENABLE_RSSI_POLL\nCMD_REMOVE_NETWORK\nCMD_RSSI_POLL\nCMD_SELECT_NETWORK\nCMD_STOP_SUPPLICANT_SUCCESS\nSUP_SCAN_RESULTS_EVENT" ];
+    default             [ actions="0, 1, 0, 0" ];
 }

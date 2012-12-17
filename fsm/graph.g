@@ -1,7 +1,11 @@
 
+import string
+
 transition = {}
 event_names = []
-nameprefix = 'WifiStateMachine::'
+action_names = {}
+nameprefix = ''
+#'WifiStateMachine::'
 
 def add_elements(first, second, events):
     if transition.get(first) is None:
@@ -14,6 +18,10 @@ def add_elements(first, second, events):
         if transition[first].get(tname) is None:
             transition[first][tname] = []
         transition[first][tname].append(second)
+
+def add_actions(first, actions):
+    #print "ACTIONS", first, actions
+    action_names[first] = actions
 
 def add_transition(first, second, attrs):
     dir = ''
@@ -57,7 +65,9 @@ def print_transitions():
     #print "OVER", sorted(event_names)
     fh = open('xx.output', 'w')
     fh.write('namespace android {\n')
-    fh.write('#ifdef FSM_DEFINE_ENUMS\nclass WifiStateMachine {\npublic:\nenum { EVENT_NONE=1,\n    ')
+    fh.write('#ifdef FSM_DEFINE_ENUMS\n')
+    #fh.write('class WifiStateMachine {\npublic:\n')
+    fh.write('enum { EVENT_NONE=1,\n    ')
     index = 0
     for item in sorted(event_names):
         fh.write(item + ', ')
@@ -65,7 +75,9 @@ def print_transitions():
         if index > 2:
             index = 0
             fh.write('\n    ')
-    fh.write('MAX_WIFI_EVENT};\n};\n#endif\n')
+    fh.write('MAX_WIFI_EVENT};\n')
+    #fh.write('};\n')
+    fh.write('#endif\n')
     fh.write('enum { STATE_NONE=1,\n    ')
     index = 0
     for item in sorted(transition):
@@ -90,8 +102,29 @@ def print_transitions():
             fh.write('    state_table[' + get_sname(item) + '].tran = TRA_' + item + ';\n')
     for item in sorted(event_names):
         fh.write('    sMessageToString[' + nameprefix + item + '] = "' + item + '";\n')
-    fh.write('}\n#endif\n')
-    fh.write('} /* namespace android */\n')
+    fh.write('}\n')
+    fh.write('\n#endif\n\n#ifdef FSM_ACTION_CODE\n')
+    addstring = ''
+    for item in sorted(action_names):
+        alist = action_names[item].split(',')
+        if alist[0].strip() == '1':
+            alist[0] = item+'_enter'
+        if alist[0].strip() != '0':
+            fh.write('static void ' + alist[0] + '(StateMachine *);\n')
+        if alist[1].strip() == '1':
+            alist[1] = item+'_process'
+        if alist[1].strip() == '2':
+            alist[1] = 'default_process'
+        if alist[1].strip() != '0':
+            fh.write('static stateprocess_t ' + alist[1] + '(StateMachine *, Message *);\n')
+        if alist[2].strip() == '1':
+            alist[2] = item+'_exit'
+        if alist[2].strip() != '0':
+            fh.write('static void ' + alist[2] + '(StateMachine *);\n')
+        if alist[3].strip() != '0':
+            alist[3] = alist[3].upper() + '_STATE'
+        addstring = addstring + '    addstateitem('  + item.upper() + '_STATE, ' + string.join(alist, ',') + ');\n'
+    fh.write('void ADD_ITEMS(State *mStateMap) {\n' + addstring + '}\n\n#endif\n} /* namespace android */\n')
     fh.close()
 
 %%
@@ -123,6 +156,7 @@ parser HSDL:
     token TOKDIGRAPH: "digraph"
     token TOKLABEL: "label"
     token TOKDEFER: "defer"
+    token TOKACTIONS: "actions"
     token TOKRANK: "rank"
     token TOKDIR: "dir"
     token TOKNODE: "node"
@@ -153,6 +187,7 @@ parser HSDL:
         | name {{ firststate = name }}
              ( LBRACKET
                  ( TOKDEFER EQUAL name {{ add_elements(firststate, "DEFER", name.split('\\n')) }}
+                 | TOKACTIONS EQUAL STR {{ add_actions(firststate, STR[1:-1]) }}
                  | ( TOKLABEL | VAR ) EQUAL name
                  )* RBRACKET SEMICOLON
              | RARROW name {{ attr = None }}

@@ -110,26 +110,32 @@ def print_transitions():
     fh.write('    mStateMap[command].mProcess = aprocess; \\\n')
     fh.write('    mStateMap[command].mExit = aexit;\n\n')
     addstring = ''
+    fh.write('class WifiStateMachineActions: public WifiStateMachine {\npublic:\n')
+    fh.write('stateprocess_t sm_default_process(Message *);\n')
     for item in sorted(action_names):
         alist = action_names[item].split(',')
         if alist[0].strip() == '1':
             alist[0] = item+'_enter'
         if alist[0].strip() != '0':
-            fh.write('static void ' + alist[0] + '(StateMachine *);\n')
+            fh.write('void ' + alist[0] + '(void);\n')
+            alist[0] = 'static_cast<ENTER_EXIT_PROTO>(&WifiStateMachineActions::' + alist[0] + ')'
         if alist[1].strip() == '1':
             alist[1] = item+'_process'
         if alist[1].strip() == '2':
-            alist[1] = 'default_process'
+            alist[1] = 'sm_default_process'
         if alist[1].strip() != '0':
-            fh.write('static stateprocess_t ' + alist[1] + '(StateMachine *, Message *);\n')
+            if alist[1] != 'sm_default_process':
+                fh.write('stateprocess_t ' + alist[1] + '(Message *);\n')
+            alist[1] = 'static_cast<PROCESS_PROTO>(&WifiStateMachineActions::' + alist[1] + ')'
         if alist[2].strip() == '1':
             alist[2] = item+'_exit'
         if alist[2].strip() != '0':
-            fh.write('static void ' + alist[2] + '(StateMachine *);\n')
+            fh.write('void ' + alist[2] + '(void);\n')
+            alist[2] = 'static_cast<ENTER_EXIT_PROTO>(&WifiStateMachineActions::' + alist[2] + ')'
         if alist[3].strip() != '0':
             alist[3] = alist[3].upper() + '_STATE'
         addstring = addstring + '    addstateitem('  + item.upper() + '_STATE, ' + string.join(alist, ',') + ');\n'
-    fh.write('void ADD_ITEMS(State *mStateMap) {\n' + addstring + '}\n\n#endif\n} /* namespace android */\n')
+    fh.write('};\nvoid ADD_ITEMS(State *mStateMap) {\n' + addstring + '}\n\n#endif\n} /* namespace android */\n')
     fh.close()
 
 %%

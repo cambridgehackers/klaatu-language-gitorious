@@ -105,6 +105,7 @@ def print_transitions():
     fh.write('}\n')
     fh.write('\n#endif\n\n#ifdef FSM_ACTION_CODE\n')
     fh.write('#define addstateitem(command, aenter, aprocess, aexit, parent) \\\n')
+    fh.write('    mStateMap[command].mName = #command; \\\n')
     fh.write('    mStateMap[command].mParent = parent; \\\n')
     fh.write('    mStateMap[command].mEnter = aenter; \\\n')
     fh.write('    mStateMap[command].mProcess = aprocess; \\\n')

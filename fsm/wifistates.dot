@@ -55,7 +55,7 @@ digraph wifistates {
     Scan_Mode           [ actions="0, 0, 0, Driver_Started" ];
     Supplicant_Started  [ actions="0, 1, 1, default" ];
     Supplicant_Starting [ actions="0, 1, 0, default" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
-    Supplicant_Stopping [ actions="1, 0, 0, default" ];
+    Supplicant_Stopping [ actions="0, 1, 0, default" ];
     Unused              [ defer="CMD_ADD_OR_UPDATE_NETWORK\nCMD_DISABLE_NETWORK\nCMD_ENABLE_BACKGROUND_SCAN\nCMD_ENABLE_NETWORK\nCMD_ENABLE_RSSI_POLL\nCMD_REMOVE_NETWORK\nCMD_RSSI_POLL\nCMD_SELECT_NETWORK\nCMD_STOP_SUPPLICANT_SUCCESS\nSUP_SCAN_RESULTS_EVENT" ];
     default             [ actions="0, 1, 0, 0" ];
 }

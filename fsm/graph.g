@@ -87,11 +87,10 @@ def print_transitions():
             index = 0
             fh.write('\n    ')
     fh.write('STATE_MAX};\n')
-    fh.write('typedef struct {\n   int event;\n   int state;\n} STATE_TRANSITION;\n')
     fh.write('extern const char *sMessageToString[' + nameprefix + 'MAX_WIFI_EVENT];\n')
     fh.write('#ifdef FSM_INITIALIZE_CODE\n')
     fh.write('const char *sMessageToString[' + nameprefix + 'MAX_WIFI_EVENT];\n')
-    fh.write('static struct {\n    const char *name;\n    STATE_TRANSITION *tran;\n} state_table[' + 'STATE_MAX];\n')
+    fh.write('STATE_TABLE_TYPE state_table[' + 'STATE_MAX];\n')
     fh.write('void initstates(void)\n{\n')
     for item in sorted(transition):
         print_states(fh, item)

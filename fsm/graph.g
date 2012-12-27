@@ -106,9 +106,7 @@ def print_transitions():
     fh.write('#define addstateitem(command, aenter, aprocess, aexit, parent) \\\n')
     fh.write('    mStateMap[command].mName = #command; \\\n')
     fh.write('    mStateMap[command].mParent = parent; \\\n')
-    fh.write('    mStateMap[command].mEnter = aenter; \\\n')
-    fh.write('    mStateMap[command].mProcess = aprocess; \\\n')
-    fh.write('    mStateMap[command].mExit = aexit;\n\n')
+    fh.write('    mStateMap[command].mProcess = aprocess;\n\n')
     addstring = ''
     fh.write('class WifiStateMachineActions: public WifiStateMachine {\npublic:\n')
     fh.write('stateprocess_t sm_default_process(Message *);\n')

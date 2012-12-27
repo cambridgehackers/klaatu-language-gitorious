@@ -37,10 +37,10 @@ digraph wifistates {
     default -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]
     default1 -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
 
-    Connect_Mode        [ actions="0, 1, 0, Driver_Started" ];
-    Connected           [ actions="0, 1, 1, Connect_Mode" color=green ];
+    Connect_Mode        [ actions="0, 1, 0, Supplicant_Started" ];
+    Connected           [ actions="0, 1, 0, Connect_Mode" color=green ];
     Connecting          [ actions="0, 2, 0, Connect_Mode" defer="CMD_START_SCAN" ];
-    Disconnected        [ actions="1, 1, 1, Connect_Mode" ];
+    Disconnected        [ actions="0, 1, 0, Connect_Mode" ];
     Disconnecting       [ actions="0, 1, 0, Connect_Mode" ];
     Driver_Failed       [ actions="0, 1, 0, Driver_Unloaded" ];
     Driver_Loaded       [ actions="0, 2, 0, 0" ];
@@ -52,8 +52,8 @@ digraph wifistates {
     Driver_Unloaded     [ actions="0, 2, 0, 0" ];
     Driver_Unloading    [ actions="0, 2, 0, 0" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
     Initial             [ color=firebrick ]; 
-    Scan_Mode           [ actions="0, 1, 0, Driver_Started" ];
-    Supplicant_Started  [ actions="0, 1, 1, 0" ];
+    Scan_Mode           [ actions="0, 1, 0, Supplicant_Started" ];
+    Supplicant_Started  [ actions="0, 1, 0, 0" ];
     Supplicant_Starting [ actions="0, 1, 0, 0" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
     Supplicant_Stopping [ actions="0, 1, 0, 0" ];
     Unused              [ defer="CMD_ADD_OR_UPDATE_NETWORK\nCMD_DISABLE_NETWORK\nCMD_ENABLE_BACKGROUND_SCAN\nCMD_ENABLE_NETWORK\nCMD_ENABLE_RSSI_POLL\nCMD_REMOVE_NETWORK\nCMD_RSSI_POLL\nCMD_SELECT_NETWORK\nCMD_STOP_SUPPLICANT_SUCCESS\nSUP_SCAN_RESULTS_EVENT" ];

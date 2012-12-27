@@ -52,7 +52,7 @@ digraph wifistates {
     Driver_Unloaded     [ actions="0, 2, 0, default" ];
     Driver_Unloading    [ actions="1, 2, 0, default" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
     Initial             [ color=firebrick ]; 
-    Scan_Mode           [ actions="0, 0, 0, Driver_Started" ];
+    Scan_Mode           [ actions="0, 1, 0, Driver_Started" ];
     Supplicant_Started  [ actions="0, 1, 1, default" ];
     Supplicant_Starting [ actions="0, 1, 0, default" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
     Supplicant_Stopping [ actions="0, 1, 0, default" ];

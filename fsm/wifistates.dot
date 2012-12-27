@@ -38,19 +38,19 @@ digraph wifistates {
     default1 -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
 
     Connect_Mode        [ actions="0, 1, 0, Driver_Started" ];
-    Connected           [ actions="1, 1, 1, Connect_Mode" color=green ];
+    Connected           [ actions="0, 1, 1, Connect_Mode" color=green ];
     Connecting          [ actions="0, 2, 0, Connect_Mode" defer="CMD_START_SCAN" ];
     Disconnected        [ actions="1, 1, 1, Connect_Mode" ];
     Disconnecting       [ actions="0, 1, 0, Connect_Mode" ];
     Driver_Failed       [ actions="0, 1, 0, Driver_Unloaded" ];
     Driver_Loaded       [ actions="0, 2, 0, 0" ];
-    Driver_Loading      [ actions="1, 2, 0, 0" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
-    Driver_Started      [ actions="1, 1, 0, Supplicant_Started" ];
+    Driver_Loading      [ actions="0, 2, 0, 0" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
+    Driver_Started      [ actions="0, 1, 0, Supplicant_Started" ];
     Driver_Starting     [ defer="CMD_START_DRIVER\nCMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_START_SCAN\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
     Driver_Stopped      [ actions="0, 2, 0, Supplicant_Started" color=green defer="CMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
     Driver_Stopping     [ actions="0, 1, 0, Supplicant_Started" defer="CMD_START_DRIVER\nCMD_STOP_DRIVER\nNETWORK_CONNECTION_EVENT\nNETWORK_DISCONNECTION_EVENT\nAUTHENTICATION_FAILURE_EVENT\nCMD_START_SCAN\nCMD_DISCONNECT\nCMD_REASSOCIATE\nCMD_RECONNECT" ];
     Driver_Unloaded     [ actions="0, 2, 0, 0" ];
-    Driver_Unloading    [ actions="1, 2, 0, 0" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
+    Driver_Unloading    [ actions="0, 2, 0, 0" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
     Initial             [ color=firebrick ]; 
     Scan_Mode           [ actions="0, 1, 0, Driver_Started" ];
     Supplicant_Started  [ actions="0, 1, 1, 0" ];

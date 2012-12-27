@@ -4,8 +4,6 @@ import string
 transition = {}
 event_names = []
 action_names = {}
-nameprefix = ''
-#'WifiStateMachine::'
 
 def add_elements(first, second, events):
     if transition.get(first) is None:
@@ -55,8 +53,6 @@ def print_states(fh, aname):
         t = item
         if item == ' ':
             t = '0'
-        else:
-            t = nameprefix + t
         for sitem in tralist[item]:
             fh.write('{' + t + ',' + get_sname(sitem) + '}, ')
     fh.write('{0,0} };\n')
@@ -87,9 +83,9 @@ def print_transitions():
             index = 0
             fh.write('\n    ')
     fh.write('STATE_MAX};\n')
-    fh.write('extern const char *sMessageToString[' + nameprefix + 'MAX_WIFI_EVENT];\n')
+    fh.write('extern const char *sMessageToString[' + 'MAX_WIFI_EVENT];\n')
     fh.write('#ifdef FSM_INITIALIZE_CODE\n')
-    fh.write('const char *sMessageToString[' + nameprefix + 'MAX_WIFI_EVENT];\n')
+    fh.write('const char *sMessageToString[' + 'MAX_WIFI_EVENT];\n')
     fh.write('STATE_TABLE_TYPE state_table[' + 'STATE_MAX];\n')
     fh.write('void initstates(void)\n{\n')
     for item in sorted(transition):
@@ -100,10 +96,10 @@ def print_transitions():
         if transition[item] != {}:
             fh.write('    state_table[' + get_sname(item) + '].tran = TRA_' + item + ';\n')
     for item in sorted(event_names):
-        fh.write('    sMessageToString[' + nameprefix + item + '] = "' + item + '";\n')
+        fh.write('    sMessageToString[' + item + '] = "' + item + '";\n')
     fh.write('}\n')
     fh.write('\n#endif\n\n#ifdef FSM_ACTION_CODE\n')
-    fh.write('#define addstateitem(command, aenter, aprocess, aexit, parent) \\\n')
+    fh.write('#define addstateitem(command, aprocess, parent) \\\n')
     fh.write('    mStateMap[command].mName = #command; \\\n')
     fh.write('    mStateMap[command].mParent = parent; \\\n')
     fh.write('    mStateMap[command].mProcess = aprocess;\n\n')
@@ -113,25 +109,15 @@ def print_transitions():
     for item in sorted(action_names):
         alist = action_names[item].split(',')
         if alist[0].strip() == '1':
-            alist[0] = item+'_enter'
+            alist[0] = item+'_process'
+        if alist[0].strip() == '2':
+            alist[0] = 'sm_default_process'
         if alist[0].strip() != '0':
-            fh.write('void ' + alist[0] + '(void);\n')
-            alist[0] = 'static_cast<ENTER_EXIT_PROTO>(&WifiStateMachineActions::' + alist[0] + ')'
-        if alist[1].strip() == '1':
-            alist[1] = item+'_process'
-        if alist[1].strip() == '2':
-            alist[1] = 'sm_default_process'
+            if alist[0] != 'sm_default_process':
+                fh.write('stateprocess_t ' + alist[0] + '(Message *);\n')
+            alist[0] = 'static_cast<PROCESS_PROTO>(&WifiStateMachineActions::' + alist[0] + ')'
         if alist[1].strip() != '0':
-            if alist[1] != 'sm_default_process':
-                fh.write('stateprocess_t ' + alist[1] + '(Message *);\n')
-            alist[1] = 'static_cast<PROCESS_PROTO>(&WifiStateMachineActions::' + alist[1] + ')'
-        if alist[2].strip() == '1':
-            alist[2] = item+'_exit'
-        if alist[2].strip() != '0':
-            fh.write('void ' + alist[2] + '(void);\n')
-            alist[2] = 'static_cast<ENTER_EXIT_PROTO>(&WifiStateMachineActions::' + alist[2] + ')'
-        if alist[3].strip() != '0':
-            alist[3] = alist[3].upper() + '_STATE'
+            alist[1] = alist[1].upper() + '_STATE'
         addstring = addstring + '    addstateitem('  + item.upper() + '_STATE, ' + string.join(alist, ',') + ');\n'
     fh.write('};\nvoid ADD_ITEMS(State *mStateMap) {\n' + addstring + '}\n\n#endif\n} /* namespace android */\n')
     fh.close()

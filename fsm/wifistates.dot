@@ -10,6 +10,7 @@ digraph wifistates {
 
     Connect_Mode -> Disconnected [ label="SUP_STATE_CHANGE_EVENT\nNETWORK_DISCONNECTION_EVENT" ]
     Connect_Mode -> Disconnecting [ label="CMD_CONNECT_NETWORK\nSUP_STATE_CHANGE_EVENT" ]
+    Connect_Mode -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]
     Connected -> Connecting 
     Connected -> Disconnecting [ label="DHCP_FAILURE\nCMD_DISCONNECT" ]
     Connecting -> Connect_Mode [ dir=back label=NETWORK_CONNECTION_EVENT ]
@@ -37,12 +38,12 @@ digraph wifistates {
     default -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]
     default1 -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
 
-    Connect_Mode        [ actions="1, Supplicant_Started" ];
+    Connect_Mode        [ actions="1, 0" ];
     Connected           [ actions="1, Connect_Mode" color=green ];
     Connecting          [ actions="2, Connect_Mode" defer="CMD_START_SCAN" ];
     Disconnected        [ actions="1, Connect_Mode" ];
     Disconnecting       [ actions="1, Connect_Mode" ];
-    Driver_Failed       [ actions="1, Driver_Unloaded" ];
+    Driver_Failed       [ actions="1, 0" ];
     Driver_Loaded       [ actions="2, 0" ];
     Driver_Loading      [ actions="2, 0" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];
     Driver_Started      [ actions="1, Supplicant_Started" ];

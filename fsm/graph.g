@@ -3,7 +3,6 @@ import string
 
 transition = {}
 event_names = []
-action_names = {}
 
 def add_elements(first, second, events):
     if transition.get(first) is None:
@@ -16,10 +15,6 @@ def add_elements(first, second, events):
         if transition[first].get(tname) is None:
             transition[first][tname] = []
         transition[first][tname].append(second)
-
-def add_actions(first, actions):
-    #print "ACTIONS", first, actions
-    action_names[first] = actions
 
 def add_transition(first, second, attrs):
     dir = ''
@@ -99,26 +94,17 @@ def print_transitions():
         fh.write('    sMessageToString[' + item + '] = "' + item + '";\n')
     fh.write('}\n')
     fh.write('\n#endif\n\n#ifdef FSM_ACTION_CODE\n')
-    fh.write('#define addstateitem(command, aprocess, parent) \\\n')
+    fh.write('#define addstateitem(command, aprocess) \\\n')
     fh.write('    mStateMap[command].mName = #command; \\\n')
-    fh.write('    mStateMap[command].mParent = parent; \\\n')
     fh.write('    mStateMap[command].mProcess = aprocess;\n\n')
     addstring = ''
     fh.write('class WifiStateMachineActions: public WifiStateMachine {\npublic:\n')
-    fh.write('stateprocess_t sm_default_process(Message *);\n')
-    for item in sorted(action_names):
-        alist = action_names[item].split(',')
-        if alist[0].strip() == '1':
-            alist[0] = item+'_process'
-        if alist[0].strip() == '2':
-            alist[0] = 'sm_default_process'
-        if alist[0].strip() != '0':
-            if alist[0] != 'sm_default_process':
-                fh.write('stateprocess_t ' + alist[0] + '(Message *);\n')
-            alist[0] = 'static_cast<PROCESS_PROTO>(&WifiStateMachineActions::' + alist[0] + ')'
-        if alist[1].strip() != '0':
-            alist[1] = alist[1].upper() + '_STATE'
-        addstring = addstring + '    addstateitem('  + item.upper() + '_STATE, ' + string.join(alist, ',') + ');\n'
+    for item in sorted(transition):
+        if item not in ['DEFER', 'Initial', 'Unused', 'default']:
+            atemp = item+'_process'
+            fh.write('stateprocess_t ' + atemp + '(Message *);\n')
+            atemp = 'static_cast<PROCESS_PROTO>(&WifiStateMachineActions::' + atemp + ')'
+            addstring = addstring + '    addstateitem('  + item.upper() + '_STATE, ' + atemp + ');\n'
     fh.write('};\nvoid ADD_ITEMS(State *mStateMap) {\n' + addstring + '}\n\n#endif\n} /* namespace android */\n')
     fh.close()
 
@@ -182,7 +168,7 @@ parser HSDL:
         | name {{ firststate = name }}
              ( LBRACKET
                  ( TOKDEFER EQUAL name {{ add_elements(firststate, "DEFER", name.split('\\n')) }}
-                 | TOKACTIONS EQUAL STR {{ add_actions(firststate, STR[1:-1]) }}
+                 | TOKACTIONS EQUAL STR
                  | ( TOKLABEL | VAR ) EQUAL name
                  )* RBRACKET SEMICOLON
              | RARROW name {{ attr = None }}

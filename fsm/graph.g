@@ -137,7 +137,6 @@ parser HSDL:
     token TOKDIGRAPH: "digraph"
     token TOKLABEL: "label"
     token TOKDEFER: "defer"
-    token TOKACTIONS: "actions"
     token TOKRANK: "rank"
     token TOKDIR: "dir"
     token TOKNODE: "node"
@@ -168,7 +167,6 @@ parser HSDL:
         | name {{ firststate = name }}
              ( LBRACKET
                  ( TOKDEFER EQUAL name {{ add_elements(firststate, "DEFER", name.split('\\n')) }}
-                 | TOKACTIONS EQUAL STR
                  | ( TOKLABEL | VAR ) EQUAL name
                  )* RBRACKET SEMICOLON
              | RARROW name {{ attr = None }}

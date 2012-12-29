@@ -4,17 +4,14 @@ digraph wifistates {
     { rank=same; Initial Driver_Loaded Supplicant_Starting Driver_Started }
     { rank=same; Driver_Unloaded Driver_Unloading }
     { rank=same; Driver_Loading Driver_Failed }
-    { rank=same; Connect_Mode Connecting Disconnected }
+    { rank=same; Connecting Disconnected }
     { rank=same; Connected Disconnecting }
     { rank=same; Driver_Stopped Scan_Mode Driver_Stopping }
 
-    Connect_Mode -> Disconnected [ label="SUP_STATE_CHANGE_EVENT\nNETWORK_DISCONNECTION_EVENT" ]
-    Connect_Mode -> Disconnecting [ label="CMD_CONNECT_NETWORK\nSUP_STATE_CHANGE_EVENT" ]
     Connected -> Connecting 
     Connected -> Disconnecting [ label="DHCP_FAILURE\nCMD_DISCONNECT" ]
-    Connecting -> Connect_Mode [ dir=back label=NETWORK_CONNECTION_EVENT ]
     Connecting -> Connected [ label="DHCP_SUCCESS" ]
-    Connecting -> Disconnecting
+    Connecting -> Disconnecting [ label="DHCP_FAILURE\nCMD_DISCONNECT" ]
     Disconnected -> Scan_Mode [ dir=both label=CMD_START_SCAN ]
     Disconnecting -> Disconnected [ label=SUP_STATE_CHANGE_EVENT ]
     Driver_Failed -> Driver_Unloading [dir=back label=CMD_UNLOAD_DRIVER_FAILURE ]
@@ -34,13 +31,15 @@ digraph wifistates {
     Supplicant_Starting -> Driver_Started [ label=SUP_CONNECTION_EVENT ]
     Supplicant_Stopping -> Driver_Loaded [ label=CMD_STOP_SUPPLICANT_FAILURE ]
     default -> Supplicant_Stopping [ label=CMD_STOP_SUPPLICANT ]
+    default -> Disconnected [ label=NETWORK_DISCONNECTION_EVENT ]
+    default -> Connecting [ label=NETWORK_CONNECTION_EVENT ]
+    default -> Disconnecting [ label=CMD_CONNECT_NETWORK ]
     default1 -> Driver_Loaded [ label=SUP_DISCONNECTION_EVENT ]
 
-    Connect_Mode        [ actions="1, 0" ];
-    Connected           [ actions="1, Connect_Mode" color=green ];
-    Connecting          [ actions="2, Connect_Mode" defer="CMD_START_SCAN" ];
-    Disconnected        [ actions="1, Connect_Mode" ];
-    Disconnecting       [ actions="1, Connect_Mode" ];
+    Connected           [ actions="1, 0" color=green ];
+    Connecting          [ actions="1, 0" ];
+    Disconnected        [ actions="1, 0" ];
+    Disconnecting       [ actions="1, 0" ];
     Driver_Failed       [ actions="1, 0" ];
     Driver_Loaded       [ actions="2, 0" ];
     Driver_Loading      [ actions="2, 0" defer="CMD_LOAD_DRIVER\nCMD_UNLOAD_DRIVER\nCMD_START_SUPPLICANT\nCMD_STOP_SUPPLICANT\nCMD_START_DRIVER\nCMD_STOP_DRIVER" ];

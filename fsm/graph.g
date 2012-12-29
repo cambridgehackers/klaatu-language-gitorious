@@ -93,15 +93,7 @@ def print_transitions():
     for item in sorted(event_names):
         fh.write('    sMessageToString[' + item + '] = "' + item + '";\n')
     fh.write('}\n')
-    fh.write('\n#endif\n\n#ifdef FSM_ACTION_CODE\n')
-    fh.write('#define addstateitem(command) \\\n')
-    fh.write('    mStateMap[command].mName = #command; \n')
-    addstring = ''
-    fh.write('class WifiStateMachineActions: public WifiStateMachine {\npublic:\n')
-    for item in sorted(transition):
-        #if item not in ['DEFER', 'Initial', 'Unused', 'default']:
-        addstring = addstring + '    addstateitem('  + item.upper() + '_STATE);\n'
-    fh.write('};\nvoid ADD_ITEMS(State *mStateMap) {\n' + addstring + '}\n\n#endif\n} /* namespace android */\n')
+    fh.write('\n#endif\n} /* namespace android */\n')
     fh.close()
 
 %%

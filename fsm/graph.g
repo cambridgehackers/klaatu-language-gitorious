@@ -94,17 +94,13 @@ def print_transitions():
         fh.write('    sMessageToString[' + item + '] = "' + item + '";\n')
     fh.write('}\n')
     fh.write('\n#endif\n\n#ifdef FSM_ACTION_CODE\n')
-    fh.write('#define addstateitem(command, aprocess) \\\n')
-    fh.write('    mStateMap[command].mName = #command; \\\n')
-    fh.write('    mStateMap[command].mProcess = aprocess;\n\n')
+    fh.write('#define addstateitem(command) \\\n')
+    fh.write('    mStateMap[command].mName = #command; \n')
     addstring = ''
     fh.write('class WifiStateMachineActions: public WifiStateMachine {\npublic:\n')
     for item in sorted(transition):
-        if item not in ['DEFER', 'Initial', 'Unused', 'default']:
-            atemp = item+'_process'
-            fh.write('stateprocess_t ' + atemp + '(Message *);\n')
-            atemp = 'static_cast<PROCESS_PROTO>(&WifiStateMachineActions::' + atemp + ')'
-            addstring = addstring + '    addstateitem('  + item.upper() + '_STATE, ' + atemp + ');\n'
+        #if item not in ['DEFER', 'Initial', 'Unused', 'default']:
+        addstring = addstring + '    addstateitem('  + item.upper() + '_STATE);\n'
     fh.write('};\nvoid ADD_ITEMS(State *mStateMap) {\n' + addstring + '}\n\n#endif\n} /* namespace android */\n')
     fh.close()
 
